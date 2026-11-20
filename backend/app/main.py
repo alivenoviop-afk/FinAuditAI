@@ -37,14 +37,19 @@ def health():
     }
 
 
-# Раздача собранного фронтенда (frontend/dist), если есть — иначе dev-страница
-_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
-if _dist.exists():
-    app.mount("/assets", StaticFiles(directory=_dist / "assets"), name="assets")
+# Раздача веб-интерфейса: frontend/dist (сборка) или frontend/ (plain, без сборки)
+_root = Path(__file__).resolve().parents[2]
+_dist = _root / "frontend" / "dist"
+_static_dir = _dist if _dist.exists() else _root / "frontend"
+
+if (_static_dir / "index.html").exists():
+    _assets = _static_dir / "assets"
+    if _assets.exists():
+        app.mount("/assets", StaticFiles(directory=_assets), name="assets")
 
     @app.get("/{full_path:path}", include_in_schema=False)
     def spa(full_path: str):
-        candidate = _dist / full_path
+        candidate = _static_dir / full_path
         if full_path and candidate.is_file():
             return FileResponse(candidate)
-        return FileResponse(_dist / "index.html")
+        return FileResponse(_static_dir / "index.html")
