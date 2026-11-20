@@ -34,14 +34,16 @@ async function loadModels() {
   try {
     const data = await api("/api/models");
     allModels = data.models;
+    const badges = { ok: ["ok", "доступен"], no_key: ["", "нет ключа"], offline: ["bad", "не запущен"], error: ["bad", "ошибка"] };
     $("#providers").innerHTML = data.providers
-      .map(
-        (p) => `<div class="card">
+      .map((p) => {
+        const [cls, label] = badges[p.status] || ["", p.status];
+        return `<div class="card">
           <b>${p.name}</b>
-          <span class="badge ${p.health ? "ok" : "bad"}">${p.health ? "доступен" : "недоступен"}</span>
+          <span class="badge ${cls}">${label}</span>
           <div class="hint">${p.kind === "local" ? "локальная" : "API"}</div>
-        </div>`
-      )
+        </div>`;
+      })
       .join("");
     table("#model-list", data.models.map((m) =>
       `<tr><td>${m.name}</td><td>${m.provider}</td>
@@ -74,6 +76,29 @@ function fillModelsFor(providerSel, modelSel) {
   $(modelSel).innerHTML = allModels.filter((m) => m.provider === provider)
     .map((m) => `<option>${m.name}</option>`).join("");
 }
+
+$("#keys-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const body = {};
+  for (const [k, v] of f.entries()) if (v.trim() !== "") body[k] = v.trim();
+  if (!Object.keys(body).length) {
+    $("#keys-result").textContent = "Введи хотя бы один ключ";
+    return;
+  }
+  try {
+    await api("/api/models/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    $("#keys-result").textContent = "✅ Ключи сохранены — обновляю каталог...";
+    e.target.reset();
+    setTimeout(loadModels, 800);
+  } catch (err) {
+    $("#keys-result").textContent = "❌ " + err.message;
+  }
+});
 
 $("#connect-form").addEventListener("submit", async (e) => {
   e.preventDefault();

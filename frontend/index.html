@@ -30,6 +30,16 @@
       </thead><tbody></tbody></table></div>
       <div id="model-errors" class="error"></div>
 
+      <h3>API-ключи (OpenAI / Anthropic)</h3>
+      <p class="hint">Ключи сохраняются в .env на сервере и сразу начинают работать. Вставь свой ключ — и модели появятся в каталоге.</p>
+      <form id="keys-form" class="form">
+        <input name="openai_api_key" placeholder="OPENAI_API_KEY (sk-...)" type="password" />
+        <input name="openai_base_url" placeholder="Base URL OpenAI (необязательно)" />
+        <input name="anthropic_api_key" placeholder="ANTHROPIC_API_KEY (sk-ant-...)" type="password" />
+        <button type="submit">Сохранить ключи</button>
+      </form>
+      <div id="keys-result" class="hint"></div>
+
       <h3>Подключить свой API</h3>
       <form id="connect-form" class="form">
         <input name="name" placeholder="Название (напр. my-llm)" required />

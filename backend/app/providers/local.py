@@ -24,7 +24,7 @@ class OllamaProvider(ModelProvider):
             r = httpx.get(f"{self.base_url}/api/tags", timeout=5)
             r.raise_for_status()
         except Exception as e:
-            raise ProviderError(f"Ollama недоступна: {e}") from e
+            raise ProviderError(f"Ollama не запущена (нужен `ollama serve`): {e}") from e
         out = []
         for m in r.json().get("models", []):
             out.append(ModelInfo(

@@ -38,11 +38,28 @@ def all_providers() -> dict[str, ModelProvider]:
     return {**_builtin, **_custom}
 
 
+def set_provider_keys(updates: dict[str, str]) -> None:
+    """Применить сохранённые ключи к уже созданным провайдерам (без перезапуска)."""
+    if "OPENAI_API_KEY" in updates:
+        _builtin["openai"].api_key = updates["OPENAI_API_KEY"]
+    if "OPENAI_BASE_URL" in updates:
+        _builtin["openai"].base_url = updates["OPENAI_BASE_URL"].rstrip("/")
+    if "ANTHROPIC_API_KEY" in updates:
+        _builtin["anthropic"].api_key = updates["ANTHROPIC_API_KEY"]
+
+
 def collect_models() -> tuple[list[ModelInfo], list[str]]:
-    """Список всех моделей + ошибки недоступных провайдеров."""
+    """Список всех моделей + ошибки недоступных провайдеров.
+
+    Провайдеры без ключа / локальные, которые не запущены, — не считаются
+    ошибкой: они молча пропускаются и помечаются статусом в /api/models.
+    """
     models: list[ModelInfo] = []
     errors: list[str] = []
     for name, prov in all_providers().items():
+        # API без ключа — просто не настроен, не шумим
+        if prov.kind == "api" and not getattr(prov, "api_key", ""):
+            continue
         try:
             models.extend(prov.list_models())
         except ProviderError as e:
