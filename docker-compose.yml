@@ -1,0 +1,18 @@
+services:
+  finauditai:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - DATABASE_URL=sqlite:////data/finauditai.db
+    volumes:
+      - ./data:/data
+      - ./frontend:/app/frontend:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000

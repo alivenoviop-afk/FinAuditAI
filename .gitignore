@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Env / secrets
+.env
+*.key
+
+# Data & artifacts
+data/uploads/*
+!data/uploads/.gitkeep
+data/models/*
+!data/models/.gitkeep
+data/finrepgym/
+artifacts/
+*.db
+*.sqlite3
+
+# Node / frontend
+node_modules/
+dist/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

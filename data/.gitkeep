@@ -1,0 +1,5 @@
+# Data dirs
+data/uploads/.gitkeep
+data/datasets/.gitkeep
+data/checkpoints/.gitkeep
+data/models/.gitkeep
