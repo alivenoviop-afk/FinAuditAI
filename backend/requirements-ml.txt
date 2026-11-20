@@ -1,0 +1,10 @@
+# ML-стек для обучения (LoRA fine-tuning) — ставить на GPU-ноде:
+#   pip install -r requirements-ml.txt
+# На хостинге без GPU (Render free) НЕ нужен — тренировка там выключена,
+# работает инференс API-моделей.
+-r requirements.txt
+torch>=2.3
+transformers>=4.44
+peft>=0.11
+datasets>=2.20
+accelerate>=0.33

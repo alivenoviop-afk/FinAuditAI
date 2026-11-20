@@ -1,0 +1,25 @@
+# Render Blueprint — полный стек по ссылке после подключения репозитория:
+#   https://dashboard.render.com → New → Blueprint → выбрать alivenoviop-afk/FinAuditAI
+services:
+  - type: web
+    name: finauditai
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      # API-ключи моделей (заполни после создания сервиса в настройках):
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_BASE_URL
+        value: https://api.openai.com/v1
+      # БД по умолчанию — SQLite в backend/data/ (создаётся автоматически).
+      # Для постоянной БД: создай Render PostgreSQL и вставь его URL сюда:
+      # - key: DATABASE_URL
+      #   sync: false
+    healthCheckPath: /api/health

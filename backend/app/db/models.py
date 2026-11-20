@@ -1,5 +1,6 @@
 """Схема БД: модели, задачи обучения, прогоны, проверки FinRepGYM."""
 from datetime import datetime, timezone
+from pathlib import Path
 
 from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
@@ -80,6 +81,13 @@ engine = create_engine(
     settings.database_url,
     connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {},
 )
+
+# SQLite: создаём родительскую папку, если её нет (важно для облака)
+if settings.database_url.startswith("sqlite:///"):
+    _db_path = settings.database_url.replace("sqlite:///", "", 1)
+    if _db_path and _db_path != ":memory:":
+        Path(_db_path).parent.mkdir(parents=True, exist_ok=True)
+
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 Base.metadata.create_all(engine)
