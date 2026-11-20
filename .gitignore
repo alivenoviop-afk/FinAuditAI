@@ -13,12 +13,14 @@ venv/
 # Data & artifacts
 data/uploads/*
 !data/uploads/.gitkeep
+backend/data/
 data/models/*
 !data/models/.gitkeep
 data/finrepgym/
 artifacts/
 *.db
 *.sqlite3
+.env
 
 # Node / frontend
 node_modules/
