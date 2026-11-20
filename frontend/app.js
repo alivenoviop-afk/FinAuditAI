@@ -57,14 +57,20 @@ async function loadModels() {
 }
 
 function fillModelSelects() {
-  const opts = allModels.map((m) => `<option value="${m.provider}::${m.name}">${m.name}</option>`).join("");
-  ["#run-provider", "#eval-provider"].forEach((s) => {
-    const sel = $(s);
-    if (sel) {
-      sel.innerHTML = opts;
-      sel.onchange = () => fillModelsFor(sel, s === "#run-provider" ? "#run-model" : "#eval-model");
-      fillModelsFor(sel, s === "#run-provider" ? "#run-model" : "#eval-model");
-    }
+  // Селект провайдеров: уникальные провайдеры (а не список моделей!)
+  const provs = [...new Map(allModels.map((m) => [m.provider, m])).values()];
+  const provOpts = provs.map((m) => {
+    const label = { ollama: "Ollama (локальная)", huggingface: "HuggingFace (локальная)",
+                    openai: "OpenAI (API)", anthropic: "Anthropic (API)" }[m.provider] || `${m.provider} (API)`;
+    return `<option value="${m.provider}">${label}</option>`;
+  }).join("") || "<option>Нет доступных провайдеров</option>";
+
+  [["#run-provider", "#run-model"], ["#eval-provider", "#eval-model"]].forEach(([ps, ms]) => {
+    const sel = $(ps);
+    if (!sel) return;
+    sel.innerHTML = provOpts;
+    sel.onchange = () => fillModelsFor(sel, ms);
+    fillModelsFor(sel, ms);
   });
   const train = $("#train-model");
   if (train) train.innerHTML = allModels.filter((m) => m.can_train)
