@@ -57,13 +57,14 @@ def collect_models() -> tuple[list[ModelInfo], list[str]]:
     models: list[ModelInfo] = []
     errors: list[str] = []
     for name, prov in all_providers().items():
-        # API без ключа — просто не настроен, не шумим
+        # API без ключа и локальные, которые не запущены — просто не настроены,
+        # не шумим в errors: статус виден в /api/models (ok/no_key/offline)
         if prov.kind == "api" and not getattr(prov, "api_key", ""):
             continue
         try:
             models.extend(prov.list_models())
-        except ProviderError as e:
-            errors.append(f"{name}: {e}")
+        except ProviderError:
+            continue  # провайдер недоступен — статус покажет provider_status
         except Exception as e:  # noqa: BLE001
             errors.append(f"{name}: {e}")
     return models, errors
