@@ -71,6 +71,46 @@
       </thead><tbody></tbody></table></div>
       <h3>Логи</h3>
       <pre id="job-logs" class="logs">Выбери задачу выше</pre>
+
+      <hr class="sep" />
+      <h2>FinRepGYM — среда аудита</h2>
+      <p class="hint">
+        Синтетические компании с 4 типами скрытых ошибок (duplicate_entry, period_cutoff,
+        partial_allocation, fx_rate), мультивалютность USD/EUR/KZT и награда
+        clip(2·F1 − 1 − 0.002·steps). Среда встроена в проект — ничего клонировать не нужно.
+      </p>
+
+      <div class="form-row">
+        <div class="card">
+          <h3>1. Датасет из эпизодов (SFT)</h3>
+          <p class="hint">Экспертная политика проходит эпизод — каждое «наблюдение → действие» становится примером для обучения.</p>
+          <div class="form">
+            <select id="gym-preset"></select>
+            <select id="gym-policy">
+              <option value="reconciliation">Политика: сверка (reconciliation)</option>
+              <option value="oracle">Политика: оракул (эталон)</option>
+            </select>
+            <input type="number" id="gym-episodes" value="20" min="1" max="200" title="Эпизодов" />
+            <input type="number" id="gym-seed" value="42" min="0" title="Seed" />
+            <button id="gym-gen">Сгенерировать датасет</button>
+          </div>
+          <div id="gym-gen-status" class="hint"></div>
+        </div>
+
+        <div class="card">
+          <h3>2. Прогон модели в среде</h3>
+          <p class="hint">Модель сама расследует эпизод (100 шагов) и получает P/R/F1 + награду. Траектории можно сохранить датасетом.</p>
+          <div class="form">
+            <select id="gym-roll-provider"></select>
+            <select id="gym-roll-model"></select>
+            <select id="gym-roll-preset"></select>
+            <input type="number" id="gym-roll-episodes" value="3" min="1" max="10" title="Эпизодов" />
+            <label class="hint"><input type="checkbox" id="gym-roll-save" checked /> сохранить траектории датасетом</label>
+            <button id="gym-roll">Запустить прогон</button>
+          </div>
+          <div id="gym-roll-status" class="hint"></div>
+        </div>
+      </div>
     </section>
 
     <!-- ПРОГОН -->

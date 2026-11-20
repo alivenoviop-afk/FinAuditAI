@@ -22,7 +22,7 @@ $$("nav button").forEach((b) =>
     b.classList.add("active");
     $("#tab-" + b.dataset.tab).classList.add("active");
     if (b.dataset.tab === "history") loadRuns();
-    if (b.dataset.tab === "training") { loadDatasets(); loadJobs(); }
+    if (b.dataset.tab === "training") { loadDatasets(); loadJobs(); loadGymPresets(); }
   })
 );
 
@@ -64,7 +64,7 @@ function fillModelSelects() {
     return `<option value="${m.provider}">${label}</option>`;
   }).join("") || "<option>Нет доступных провайдеров</option>";
 
-  [["#run-provider", "#run-model"]].forEach(([ps, ms]) => {
+  [["#run-provider", "#run-model"], ["#gym-roll-provider", "#gym-roll-model"]].forEach(([ps, ms]) => {
     const sel = $(ps);
     if (!sel) return;
     sel.innerHTML = provOpts;
@@ -216,6 +216,87 @@ function pollRun(id) {
         `</tbody></table>`
       : `<p class="hint">Ошибок не найдено.</p>`;
   }, 1500);
+}
+
+/* ---------- FinRepGYM (среда аудита) ---------- */
+async function loadGymPresets() {
+  try {
+    const d = await api("/api/training/presets");
+    const opts = d.presets.map((p) => `<option value="${p.id}">${p.label}</option>`).join("");
+    const sel1 = $("#gym-preset"), sel2 = $("#gym-roll-preset");
+    if (sel1 && !sel1.options.length) sel1.innerHTML = opts;
+    if (sel2 && !sel2.options.length) sel2.innerHTML = opts;
+  } catch { /* ignore */ }
+}
+
+$("#gym-gen").addEventListener("click", async () => {
+  const body = {
+    episodes: +$("#gym-episodes").value || 20,
+    seed: +$("#gym-seed").value || 0,
+    preset: $("#gym-preset").value || "all4",
+    policy: $("#gym-policy").value || "reconciliation",
+  };
+  $("#gym-gen-status").textContent = `⏳ Генерирую ${body.episodes} эпизодов...`;
+  try {
+    const r = await api("/api/training/gym/dataset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    $("#gym-gen-status").textContent =
+      `✅ ${r.name}: ${r.samples} примеров из ${r.episodes} эпизодов · ` +
+      `F1=${r.avg_f1} reward=${r.avg_reward} · ${r.seconds}s — выбери его в «Датасет»`;
+    loadDatasets();
+  } catch (e) {
+    $("#gym-gen-status").textContent = "❌ " + e.message;
+  }
+});
+
+$("#gym-roll").addEventListener("click", async () => {
+  const provider = $("#gym-roll-provider").value;
+  const model = $("#gym-roll-model").value;
+  if (!provider || !model) return alert("Нет доступных моделей");
+  const body = {
+    provider, model,
+    episodes: +$("#gym-roll-episodes").value || 3,
+    preset: $("#gym-roll-preset").value || "all4",
+    save_dataset: $("#gym-roll-save").checked,
+    seed: 42,
+  };
+  $("#gym-roll-status").textContent = "⏳ Запуск прогона в среде...";
+  try {
+    const r = await api("/api/training/gym/rollout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    $("#gym-roll-status").textContent = `⏳ Задача #${r.job_id} запущена — смотри логи выше`;
+    pollGymJob(r.job_id);
+  } catch (e) {
+    $("#gym-roll-status").textContent = "❌ " + e.message;
+  }
+});
+
+function pollGymJob(id) {
+  const t = setInterval(async () => {
+    try {
+      const j = await api("/api/training/jobs/" + id);
+      if (j.status === "running" || j.status === "queued") return;
+      clearInterval(t);
+      loadJobs();
+      if (j.status === "failed") {
+        $("#gym-roll-status").textContent = "❌ " + (j.logs || "").split("\n").filter(Boolean).pop();
+        return;
+      }
+      const r = j.result || {};
+      $("#gym-roll-status").innerHTML =
+        `✅ F1=<b>${r.f1}</b> · P=${r.precision} · R=${r.recall} · reward=<b>${r.reward}</b>` +
+        ` · шагов=${r.avg_steps} · эпизодов=${r.episodes}` +
+        (r.dataset ? ` · датасет: <b>${r.dataset}</b>` : "") +
+        (r.invalid ? ` · отклонено ответов: ${r.invalid}` : "");
+      if (r.dataset) loadDatasets();
+    } catch { /* ignore */ }
+  }, 2500);
 }
 
 /* ---------- История ---------- */

@@ -1,4 +1,4 @@
-"""API: загрузка датасетов, задачи обучения (LoRA), логи и прогресс."""
+"""API: загрузка датасетов, задачи обучения (LoRA), данные из FinRepGYM."""
 from __future__ import annotations
 
 import shutil
@@ -9,6 +9,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.core.config import settings
+from app.core.gym_training import PRESETS, generate_sft_dataset, save_rollout_job
 from app.core.trainer import start_training
 from app.db.models import SessionLocal, TrainingJob
 from app.providers.base import ProviderError
@@ -110,3 +111,70 @@ def job_detail(job_id: int):
         }
     finally:
         db.close()
+
+
+# --------------------------------------------------------------------------- #
+# FinRepGYM: генерация данных и прогоны модели в среде
+# --------------------------------------------------------------------------- #
+class GymDatasetBody(BaseModel):
+    episodes: int = 10
+    seed: int = 42
+    preset: str = "all4"
+    policy: str = "reconciliation"   # reconciliation | oracle
+
+
+class GymRolloutBody(BaseModel):
+    provider: str
+    model: str
+    episodes: int = 3
+    seed: int = 42
+    preset: str = "all4"
+    save_dataset: bool = True
+
+
+@router.get("/presets")
+def list_presets():
+    """Пресеты эпизодов FinRepGYM (типы ошибок, сценарии, чистые компании)."""
+    labels = {
+        "all4": "Все 4 типа ошибок",
+        "default": "2 типа (duplicate + period)",
+        "scenarios": "Сценарии S1/S2 (взаимодействия)",
+        "clean": "Чистая компания (ошибок нет)",
+    }
+    return {"presets": [{"id": k, "label": labels.get(k, k)} for k in PRESETS]}
+
+
+@router.post("/gym/dataset")
+def gym_dataset(body: GymDatasetBody):
+    """Эпизоды + экспертная политика → JSONL-датасет для обучения (SFT)."""
+    if not 1 <= body.episodes <= 200:
+        raise HTTPException(400, "episodes: от 1 до 200")
+    if body.preset not in PRESETS:
+        raise HTTPException(400, f"Неизвестный пресет: {body.preset}")
+    if body.policy not in ("reconciliation", "oracle"):
+        raise HTTPException(400, "policy: reconciliation или oracle")
+    try:
+        return generate_sft_dataset(body.episodes, body.seed, body.preset, body.policy)
+    except ProviderError as e:
+        raise HTTPException(400, str(e)) from e
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(500, f"Ошибка генерации: {e}") from e
+
+
+@router.post("/gym/rollout")
+def gym_rollout(body: GymRolloutBody):
+    """Фоновый прогон модели через эпизоды среды: P/R/F1 + награда (+ датасет)."""
+    if not 1 <= body.episodes <= 10:
+        raise HTTPException(400, "episodes: от 1 до 10")
+    if body.preset not in PRESETS:
+        raise HTTPException(400, f"Неизвестный пресет: {body.preset}")
+    try:
+        prov = get_provider(body.provider)
+        if not prov.health():
+            raise ProviderError(f"Провайдер {body.provider} недоступен")
+    except ProviderError as e:
+        raise HTTPException(400, str(e)) from e
+
+    job_id = save_rollout_job(body.provider, body.model, body.episodes,
+                              body.seed, body.preset, body.save_dataset)
+    return {"ok": True, "job_id": job_id}
