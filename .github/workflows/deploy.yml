@@ -1,0 +1,16 @@
+name: Deploy to Render
+
+# Автодеплой: каждый push в master триггерит deploy hook Render
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          curl -sf -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{"branch": "master"}'
