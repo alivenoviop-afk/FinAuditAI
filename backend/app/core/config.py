@@ -22,10 +22,6 @@ class Settings(BaseSettings):
     openai_base_url: str = "https://api.openai.com/v1"
     anthropic_api_key: str = ""
 
-    # Проверщик
-    finrepgym_dir: str = str(ROOT_DIR / "data" / "finrepgym")
-    finrepgym_repo: str = "https://github.com/alivenoviop-afk/FinRepGYM"
-
     # Пути
     data_dir: Path = ROOT_DIR / "data"
     uploads_dir: Path = ROOT_DIR / "data" / "uploads"

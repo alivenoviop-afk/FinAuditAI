@@ -23,7 +23,6 @@ $$("nav button").forEach((b) =>
     $("#tab-" + b.dataset.tab).classList.add("active");
     if (b.dataset.tab === "history") loadRuns();
     if (b.dataset.tab === "training") { loadDatasets(); loadJobs(); }
-    if (b.dataset.tab === "eval") loadEvalHistory();
   })
 );
 
@@ -65,7 +64,7 @@ function fillModelSelects() {
     return `<option value="${m.provider}">${label}</option>`;
   }).join("") || "<option>Нет доступных провайдеров</option>";
 
-  [["#run-provider", "#run-model"], ["#eval-provider", "#eval-model"]].forEach(([ps, ms]) => {
+  [["#run-provider", "#run-model"]].forEach(([ps, ms]) => {
     const sel = $(ps);
     if (!sel) return;
     sel.innerHTML = provOpts;
@@ -217,47 +216,6 @@ function pollRun(id) {
         `</tbody></table>`
       : `<p class="hint">Ошибок не найдено.</p>`;
   }, 1500);
-}
-
-/* ---------- Eval FinRepGYM ---------- */
-$("#setup-checker").addEventListener("click", async () => {
-  $("#eval-status").textContent = "⏳ Клонирование FinRepGYM и проверка...";
-  try {
-    const r = await api("/api/eval/setup", { method: "POST" });
-    $("#eval-status").textContent = (r.ok ? "✅ Проверщик готов: " : "⚠ ") + r.path + "\n" + r.stdout.slice(-500);
-  } catch (e) { $("#eval-status").textContent = "❌ " + e.message; }
-});
-
-$("#start-eval").addEventListener("click", async () => {
-  const [provider] = $("#eval-provider").value.split("::");
-  const model = $("#eval-model").value;
-  const split = $("#eval-split").value;
-  $("#eval-status").textContent = "⏳ Прогон через эпизоды FinRepGYM...";
-  try {
-    const m = await api("/api/eval/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider, model, split, max_episodes: 10 }),
-    });
-    $("#eval-status").textContent = `✅ Оценено эпизодов: ${m.episodes}`;
-    $("#eval-result").innerHTML = `<div class="cards">
-      <div class="card"><b>Precision</b><div class="big">${m.precision}</div></div>
-      <div class="card"><b>Recall</b><div class="big">${m.recall}</div></div>
-      <div class="card"><b>F1</b><div class="big">${m.f1}</div></div>
-      <div class="card"><b>Reward</b><div class="big">${m.reward}</div></div>
-      <div class="card"><b>Шаги</b><div class="big">${m.steps}</div></div>
-    </div>`;
-    loadEvalHistory();
-  } catch (e) { $("#eval-status").textContent = "❌ " + e.message; }
-});
-
-async function loadEvalHistory() {
-  try {
-    const d = await api("/api/eval/history");
-    table("#eval-history", d.results.map((r) =>
-      `<tr><td>${r.model}</td><td>${r.split}</td><td>${r.precision}</td>
-       <td>${r.recall}</td><td>${r.f1}</td><td>${r.reward}</td></tr>`));
-  } catch { /* ignore */ }
 }
 
 /* ---------- История ---------- */

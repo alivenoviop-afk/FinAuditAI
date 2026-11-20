@@ -13,7 +13,6 @@
       <button data-tab="models" class="active">Модели</button>
       <button data-tab="training">Тренировка</button>
       <button data-tab="run">Прогон файлов</button>
-      <button data-tab="eval">Проверка FinRepGYM</button>
       <button data-tab="history">История</button>
     </nav>
   </header>
@@ -85,28 +84,6 @@
       </div>
       <div id="run-status" class="hint"></div>
       <div id="run-result"></div>
-    </section>
-
-    <!-- EVAL -->
-    <section id="tab-eval" class="tab">
-      <h2>Проверка через FinRepGYM</h2>
-      <p class="hint">
-        <a href="https://github.com/alivenoviop-afk/FinRepGYM" target="_blank">FinRepGYM</a> —
-        RL-среда для аудита: 4 типа ошибок, награда clip(2·F1 − 1 − 0.002·steps). Модель играет роль политики и получает P/R/F1.
-      </p>
-      <div class="form">
-        <button id="setup-checker">Настроить проверщик (клонировать FinRepGYM)</button>
-        <select id="eval-provider"></select>
-        <select id="eval-model"></select>
-        <select id="eval-split"><option value="dev">dev эпизоды</option><option value="train">train эпизоды</option></select>
-        <button id="start-eval">Оценить модель</button>
-      </div>
-      <div id="eval-status" class="hint"></div>
-      <div id="eval-result"></div>
-      <h3>История оценок</h3>
-      <div id="eval-history" class="table-wrap"><table><thead>
-        <tr><th>Модель</th><th>Split</th><th>P</th><th>R</th><th>F1</th><th>Reward</th></tr>
-      </thead><tbody></tbody></table></div>
     </section>
 
     <!-- ИСТОРИЯ -->

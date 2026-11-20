@@ -1,4 +1,4 @@
-"""Схема БД: модели, задачи обучения, прогоны, проверки FinRepGYM."""
+"""Схема БД: модели, задачи обучения, прогоны файлов."""
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -60,21 +60,6 @@ class RunRecord(Base):
     error: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
-
-class EvalResult(Base):
-    __tablename__ = "eval_results"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    model_name: Mapped[str] = mapped_column(String(200))
-    episodes: Mapped[str] = mapped_column(String(50), default="dev")
-    precision: Mapped[float | None] = mapped_column(Float, nullable=True)
-    recall: Mapped[float | None] = mapped_column(Float, nullable=True)
-    f1: Mapped[float | None] = mapped_column(Float, nullable=True)
-    reward: Mapped[float | None] = mapped_column(Float, nullable=True)
-    steps: Mapped[float | None] = mapped_column(Float, nullable=True)
-    detail: Mapped[dict] = mapped_column(JSON, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
 engine = create_engine(

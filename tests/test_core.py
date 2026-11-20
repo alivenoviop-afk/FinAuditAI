@@ -33,22 +33,6 @@ class TestPipeline(unittest.TestCase):
         self.assertEqual(out["findings"], [])
 
 
-class TestMatcher(unittest.TestCase):
-    def test_match(self):
-        from app.core.evaluator import _match
-        truth = [{"type": "duplicate_entry", "affected_ids": ["r1", "r2"]}]
-        findings = [{"type": "duplicate_entry", "affected_ids": ["r2", "r1"]}]
-        tp, fp, fn = _match(truth, findings)
-        self.assertEqual((tp, fp, fn), (1, 0, 0))
-
-    def test_no_match_wrong_type(self):
-        from app.core.evaluator import _match
-        truth = [{"type": "fx_rate", "affected_ids": ["r1"]}]
-        findings = [{"type": "duplicate_entry", "affected_ids": ["r1"]}]
-        tp, fp, fn = _match(truth, findings)
-        self.assertEqual((tp, fp, fn), (0, 1, 1))
-
-
 class TestAPI(unittest.TestCase):
     def test_health(self):
         from fastapi.testclient import TestClient
